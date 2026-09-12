@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Inventory Log{% endblock %}
+{% block page_title %}Inventory Log{% endblock %}
+
+{% block content %}
+
+<!-- Info banner -->
+<div style="background:rgba(39,196,168,.08);border:1px solid rgba(39,196,168,.25);border-radius:var(--radius);padding:12px 18px;margin-bottom:20px;font-size:13px;color:var(--teal)">
+  📒 This is a <strong>permanent record</strong> of every stock addition. It is <strong>never affected by sales</strong>.
+  Sales only affect the <a href="/inventory" style="color:var(--accent);text-decoration:underline">Available Stock</a> page.
+</div>
+
+<!-- Daily Summary -->
+{% if daily %}
+<div class="panel" style="margin-bottom:20px">
+  <div class="panel-header"><div class="panel-title">Daily Summary (last 30 entries)</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Category</th><th>Total Added</th></tr></thead>
+      <tbody>
+        {% for d in daily %}
+        <tr>
+          <td>{{ d.log_date }}</td>
+          <td><span class="badge {{ 'badge-teal' if d.cat == 'feet' else 'badge-blue' }}">
+            {{ 'Feet×Feet' if d.cat == 'feet' else 'Interlock' }}
+          </span></td>
+          <td><strong>{{ d.total }}</strong> {{ 'sqft' if d.cat == 'feet' else 'pcs' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Filters -->
+<div style="display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
+  <form method="GET" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <select class="form-control" name="cat" style="width:160px" onchange="this.form.submit()">
+      <option value="" {{ 'selected' if not cat }}>All Categories</option>
+      <option value="feet" {{ 'selected' if cat == 'feet' }}>Feet × Feet</option>
+      <option value="interlock" {{ 'selected' if cat == 'interlock' }}>Interlock</option>
+    </select>
+    <input type="date" class="form-control" name="date" style="width:160px"
+           value="{{ date }}" onchange="this.form.submit()">
+    <a href="/inventory-log" class="btn btn-secondary btn-sm">Clear</a>
+  </form>
+  <span style="font-size:12px;color:var(--muted);margin-left:auto">{{ records|length }} entries</span>
+</div>
+
+<!-- Full Log -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">All Inventory Entries</div>
+    <a href="/add-inventory" class="btn btn-primary btn-sm">➕ Add Stock</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>#</th>
+        <th>Date</th>
+        <th>Category</th>
+        <th>Size</th>
+        <th>Shape</th>
+        <th>Color</th>
+        <th>Qty Added</th>
+        <th>Added By</th>
+        <th>Note</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        {% if records %}
+          {% for r in records %}
+          <tr id="logrow-{{ r.id }}">
+            <td style="color:var(--muted)">{{ loop.index }}</td>
+            <td>{{ r.log_date }}</td>
+            <td><span class="badge {{ 'badge-teal' if r.cat == 'feet' else 'badge-blue' }}">
+              {{ 'Feet×Feet' if r.cat == 'feet' else 'Interlock' }}
+            </span></td>
+            <td><strong>{{ r.size }}</strong></td>
+            <td>{{ r.shape or '—' }}</td>
+            <td>{{ r.color }}</td>
+            <td><strong style="color:var(--success)">+{{ r.quantity }}</strong>
+              <span style="font-size:11px;color:var(--muted)">{{ 'sqft' if r.cat == 'feet' else 'pcs' }}</span>
+            </td>
+            <td style="font-size:12px">{{ r.added_by or '—' }}</td>
+            <td style="font-size:12px;color:var(--muted)">{{ r.note or '—' }}</td>
+            <td>
+              <button class="btn btn-danger btn-sm" onclick="deleteLogEntry({{ r.id }})">Del</button>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="10">
+            <div class="empty"><div class="empty-icon">📒</div><p>No entries yet. <a href="/add-inventory" style="color:var(--accent)">Add stock →</a></p></div>
+          </td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteLogEntry(id) {
+  if (!confirm('Delete this log entry?\n\nNote: This will NOT affect available stock counts.')) return;
+  fetch('/api/inventory-log/delete', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({id})
+  }).then(() => {
+    document.getElementById('logrow-' + id).remove();
+    toast('Log entry deleted', 'err');
+  });
+}
+</script>
+{% endblock %}

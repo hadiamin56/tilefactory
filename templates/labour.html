@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Labour Charges{% endblock %}
+{% block page_title %}Labour Charges{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">➕ Add Labour Entry</div></div>
+  <div class="panel-body">
+    <form method="POST">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Work Type</label>
+          <input type="text" class="form-control" name="work_type" placeholder="e.g. Moulding, Curing, Packing" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Labour Names (optional)</label>
+          <input type="text" class="form-control" name="labour_names" placeholder="e.g. Rashid, Farooq">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Number of Labourers</label>
+          <input type="number" class="form-control" name="labour_count" value="1" min="1" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rate per Labourer (₹)</label>
+          <input type="number" class="form-control" name="rate" min="0" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Link to Order (optional)</label>
+          <select class="form-control" name="order_id">
+            <option value="">— Not linked to a specific order —</option>
+            {% for s in recent_sales %}
+            <option value="{{ s.id }}">#{{ s.id }} — {{ s.description }} ({{ s.customer or 'no customer' }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm" style="margin-top:14px">Add Entry</button>
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">📊 Monthly Labour Cost</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Month</th><th>Total Charge</th></tr></thead>
+      <tbody>
+        {% if monthly %}
+          {% for m in monthly %}
+          <tr><td>{{ m.month }}</td><td><strong>₹{{ "%.2f"|format(m.total) }}</strong></td></tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="2"><div class="empty"><div class="empty-icon">📊</div><p>No entries yet</p></div></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">🧑‍🔧 All Labour Entries</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Work Type</th><th>Labourers</th><th>Count</th><th>Rate</th><th>Total</th><th>Order</th><th></th></tr></thead>
+      <tbody>
+        {% if entries %}
+          {% for e in entries %}
+          <tr>
+            <td>{{ e.entry_date }}</td>
+            <td>{{ e.work_type }}</td>
+            <td>{{ e.labour_names or '—' }}</td>
+            <td>{{ e.labour_count }}</td>
+            <td>₹{{ "%.2f"|format(e.rate) }}</td>
+            <td><strong>₹{{ "%.2f"|format(e.total_charge) }}</strong></td>
+            <td>{% if e.order_id %}<a href="/invoice/{{ e.order_id }}" target="_blank">#{{ e.order_id }}</a>{% else %}—{% endif %}</td>
+            <td>
+              <form method="POST" action="/labour/{{ e.id }}/delete" style="display:inline">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this entry?')">Del</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="8"><div class="empty"><div class="empty-icon">🧑‍🔧</div><p>No labour entries yet</p></div></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

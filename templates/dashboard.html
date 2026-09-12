@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stat-grid">
+  <div class="stat-card" style="--accent-color:var(--accent)">
+    <div class="stat-label">Total SKUs</div>
+    <div class="stat-value">{{ feet_skus + interlock_skus }}</div>
+    <div class="stat-sub">Unique product lines</div>
+  </div>
+  <div class="stat-card" style="--accent-color:var(--teal)">
+    <div class="stat-label">Total Stock</div>
+    <div class="stat-value">{{ "{:,}".format(feet_stock + interlock_stock) }}</div>
+    <div class="stat-sub">Units in hand</div>
+  </div>
+  <div class="stat-card" style="--accent-color:var(--blue)">
+    <div class="stat-label">Sales Today</div>
+    <div class="stat-value">{{ today_sales }}</div>
+    <div class="stat-sub">Units sold today</div>
+  </div>
+  <div class="stat-card" style="--accent-color:var(--accent2)">
+    <div class="stat-label">Total Sales</div>
+    <div class="stat-value">{{ "{:,}".format(total_sales) }}</div>
+    <div class="stat-sub">All-time units sold</div>
+  </div>
+  <div class="stat-card" style="--accent-color:var(--danger)">
+    <div class="stat-label">Low Stock</div>
+    <div class="stat-value">{{ low_count }}</div>
+    <div class="stat-sub">Items below {{ threshold }}</div>
+  </div>
+</div>
+
+<!-- Money Overview -->
+<div class="stat-grid">
+  <div class="stat-card" style="--accent-color:var(--danger)">
+    <div class="stat-label">Total Receivable</div>
+    <div class="stat-value">₹{{ "{:,.0f}".format(total_receivable) }}</div>
+    <div class="stat-sub"><a href="/customers" style="color:inherit">Customer udhaar →</a></div>
+  </div>
+  <div class="stat-card" style="--accent-color:var(--accent)">
+    <div class="stat-label">Total Payable</div>
+    <div class="stat-value">₹{{ "{:,.0f}".format(total_payable) }}</div>
+    <div class="stat-sub"><a href="/suppliers" style="color:inherit">Supplier bakaya →</a></div>
+  </div>
+  <div class="stat-card" style="--accent-color:var(--blue)">
+    <div class="stat-label">Labour + Loading (This Month)</div>
+    <div class="stat-value">₹{{ "{:,.0f}".format(month_labour_loading) }}</div>
+    <div class="stat-sub">Production &amp; transport cost</div>
+  </div>
+  <div class="stat-card" style="--accent-color:var(--teal)">
+    <div class="stat-label">Pending Advance Orders</div>
+    <div class="stat-value">{{ pending_advances }}</div>
+    <div class="stat-sub"><a href="/advance-orders" style="color:inherit">View orders →</a></div>
+  </div>
+</div>
+
+<!-- Recent Sales -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">Recent Sales</div>
+    <a href="/sales-history" class="btn btn-secondary btn-sm">View All →</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Category</th><th>Product</th><th>Qty</th><th>Customer</th><th>Note</th></tr></thead>
+      <tbody>
+        {% if recent_sales %}
+          {% for s in recent_sales %}
+          <tr>
+            <td>{{ s.sale_date }}</td>
+            <td><span class="badge {{ 'badge-teal' if s.cat == 'feet' else 'badge-blue' }}">{{ 'Feet×Feet' if s.cat == 'feet' else 'Interlock' }}</span></td>
+            <td>{{ s.description }}</td>
+            <td><strong>{{ s.quantity }}</strong></td>
+            <td>{{ s.customer or '—' }}</td>
+            <td style="color:var(--muted);font-size:12px">{{ s.note or '—' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="6"><div class="empty"><div class="empty-icon">📋</div><p>No sales yet</p></div></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Low Stock Alerts -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">⚠️ Low Stock Alerts</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Category</th><th>Product</th><th>Stock</th><th>Action</th></tr></thead>
+      <tbody>
+        {% if low_items %}
+          {% for item in low_items %}
+          <tr>
+            <td><span class="badge {{ 'badge-teal' if item.cat == 'Feet×Feet' else 'badge-blue' }}">{{ item.cat }}</span></td>
+            <td>{{ item.desc }}</td>
+            <td class="stock-low">{{ item.stock }} ⚠️</td>
+            <td><a href="/add-inventory" class="btn btn-teal btn-sm">Restock</a></td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="4"><div class="empty"><div class="empty-icon">✅</div><p>All stock levels are healthy</p></div></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

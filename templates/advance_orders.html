@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Advance Orders{% endblock %}
+{% block page_title %}Advance Orders{% endblock %}
+
+{% block content %}
+<div class="stat-grid" style="margin-bottom:18px">
+  <div class="stat-card" style="--accent-color:var(--teal)">
+    <div class="stat-label">Pending Orders</div>
+    <div class="stat-value">{{ pending_count }}</div>
+    <div class="stat-sub">Awaiting delivery</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">➕ New Advance Order</div></div>
+  <div class="panel-body">
+    <form method="POST">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Customer Name</label>
+          <input type="text" class="form-control" name="customer" placeholder="Full name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone (optional)</label>
+          <input type="text" class="form-control" name="phone" placeholder="Phone number">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Order Details</label>
+          <input type="text" class="form-control" name="item_details" placeholder="e.g. 500 sqft 2x2 Grey tiles" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Advance Amount Received (₹)</label>
+          <input type="number" class="form-control" name="advance_amount" min="0" step="0.01" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm" style="margin-top:14px">Create Advance Order</button>
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">🕒 All Advance Orders</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Customer</th><th>Order Details</th><th>Advance</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% if orders %}
+          {% for o in orders %}
+          <tr>
+            <td>{{ o.order_date }}</td>
+            <td>{{ o.customer_name }}{% if o.customer_phone %}<br><span style="color:var(--muted);font-size:11px">{{ o.customer_phone }}</span>{% endif %}</td>
+            <td>{{ o.item_details }}</td>
+            <td>₹{{ "%.2f"|format(o.advance_amount) }}</td>
+            <td>
+              {% if o.status == 'Pending' %}
+                <span class="badge badge-orange">Pending</span>
+              {% else %}
+                <span class="badge badge-teal">Delivered</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if o.status == 'Pending' %}
+                <a href="/advance-orders/{{ o.id }}/deliver" class="btn btn-teal btn-sm">Deliver</a>
+              {% elif o.sale_id %}
+                <a href="/invoice/{{ o.sale_id }}" class="btn btn-secondary btn-sm" target="_blank">🧾 Invoice</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="6"><div class="empty"><div class="empty-icon">🕒</div><p>No advance orders yet</p></div></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

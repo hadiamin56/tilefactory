@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}{{ customer.name }} — Ledger{% endblock %}
+{% block page_title %}Customer Ledger — {{ customer.name }}{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
+  <a href="/customers" class="btn btn-secondary btn-sm">← All Customers</a>
+  <span style="font-size:13px;color:var(--muted)">Phone: {{ customer.phone or '—' }}</span>
+  <div style="margin-left:auto;font-size:16px;font-weight:700">
+    Balance:
+    {% if balance > 0 %}
+      <span class="stock-low">₹{{ "%.2f"|format(balance) }} due</span>
+    {% elif balance < 0 %}
+      <span class="stock-ok">₹{{ "%.2f"|format(-balance) }} advance</span>
+    {% else %}
+      <span style="color:var(--success)">Settled</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">💰 Record Payment</div></div>
+  <div class="panel-body">
+    <form method="POST" action="/customers/{{ customer.id }}/payment" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end">
+      <div class="form-group">
+        <label class="form-label">Amount (₹)</label>
+        <input type="number" class="form-control" name="amount" min="0.01" step="0.01" required>
+      </div>
+      <div class="form-group" style="flex:1;min-width:200px">
+        <label class="form-label">Note (optional)</label>
+        <input type="text" class="form-control" name="note" placeholder="e.g. Cash / UPI">
+      </div>
+      <button type="submit" class="btn btn-primary">Record Payment</button>
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">🛒 Sales (Credit)</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Invoice</th><th>Item</th><th>Qty</th><th>Grand Total</th><th>Paid</th><th>Due</th><th></th></tr></thead>
+      <tbody>
+        {% if sales %}
+          {% for s in sales %}
+          <tr>
+            <td>{{ s.sale_date }}</td>
+            <td>{{ s.invoice_no }}</td>
+            <td>{{ s.description }}</td>
+            <td>{{ s.quantity }}</td>
+            <td><strong style="color:var(--accent)">₹{{ "%.2f"|format(s.grand_total or 0) }}</strong></td>
+            <td style="color:var(--success)">₹{{ "%.2f"|format(s.amount_paid if s.amount_paid is not none else s.grand_total or 0) }}</td>
+            <td>{% if s.amount_due %}<span class="stock-low">₹{{ "%.2f"|format(s.amount_due) }}</span>{% else %}—{% endif %}</td>
+            <td><a href="/invoice/{{ s.id }}" class="btn btn-teal btn-sm" target="_blank">🧾</a></td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="8"><div class="empty"><div class="empty-icon">🛒</div><p>No sales yet</p></div></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">💵 Payments (Debit)</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Amount</th><th>Note</th></tr></thead>
+      <tbody>
+        {% if payments %}
+          {% for p in payments %}
+          <tr>
+            <td>{{ p.payment_date }}</td>
+            <td style="color:var(--success)">₹{{ "%.2f"|format(p.amount) }}</td>
+            <td>{{ p.note or '—' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="3"><div class="empty"><div class="empty-icon">💵</div><p>No payments recorded yet</p></div></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

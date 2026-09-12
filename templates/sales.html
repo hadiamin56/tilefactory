@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% block title %}Record Sale{% endblock %}
+{% block page_title %}Record Sale{% endblock %}
+
+{% block content %}
+{% if success %}
+<div class="alert-success">✅ Sale recorded successfully!</div>
+{% endif %}
+{% if error == 'stock' %}
+<div class="alert-danger">❌ Not enough stock for this sale!</div>
+{% endif %}
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('feet',this,'sale-feet','sale-interlock')">📐 Feet × Feet</div>
+  <div class="tab" onclick="switchTab('interlock',this,'sale-feet','sale-interlock')">🔩 Interlock</div>
+</div>
+
+<!-- hidden prices map -->
+<script>
+const PRICES = {{ prices | tojson }};
+const LOADING_RATE = {{ loading_charge }};
+</script>
+
+<!-- ═══ FEET SALE ═══ -->
+<div id="sale-feet">
+  <form method="POST" id="form-feet">
+    <input type="hidden" name="cat" value="feet">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+      <!-- LEFT: Product + Pricing -->
+      <div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">📐 Product</div></div>
+          <div class="panel-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Size</label>
+                <select class="form-control" name="size" id="fs-size" onchange="fetchStockAndPrice('feet')" required>
+                  {% for s in feet_sizes %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Color</label>
+                <select class="form-control" name="color" id="fs-color" onchange="fetchStockAndPrice('feet')" required>
+                  {% for c in feet_colors %}<option value="{{ c.name }}">{{ c.name }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Available Stock</label>
+                <div class="form-control avail-display" id="fs-avail">—</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Quantity (sqft)</label>
+                <input type="number" class="form-control" name="qty" id="fs-qty" placeholder="Enter qty" min="1" oninput="calcTotal('feet')" required>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">💰 Pricing</div></div>
+          <div class="panel-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Price per Tile (₹)</label>
+                <input type="number" class="form-control" name="price_per_unit" id="fs-price"
+                       placeholder="0.00" min="0" step="0.01" oninput="calcTotal('feet')">
+                <span style="font-size:11px;color:var(--muted)">Auto-filled from price list if set</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Loading Charge</label>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                    <input type="checkbox" name="use_loading" id="fs-loading" onchange="calcTotal('feet')"
+                           style="width:16px;height:16px;accent-color:var(--accent)">
+                    Apply loading charge
+                  </label>
+                  <span style="font-size:12px;color:var(--muted)" id="fs-loading-rate">₹{{ loading_charge }}/tile</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Discount Type</label>
+                <select class="form-control" name="discount_type" id="fs-disc-type" onchange="calcTotal('feet')">
+                  <option value="">No Discount</option>
+                  <option value="percent">Percent (%)</option>
+                  <option value="amount">Fixed Amount (₹)</option>
+                </select>
+              </div>
+              <div class="form-group" id="fs-disc-wrap" style="display:none">
+                <label class="form-label" id="fs-disc-label">Discount Value</label>
+                <input type="number" class="form-control" name="discount_value" id="fs-disc-val"
+                       placeholder="0" min="0" step="0.01" oninput="calcTotal('feet')">
+              </div>
+            </div>
+
+            <!-- TOTAL BOX -->
+            <div class="total-box" id="fs-total-box">
+              <div class="total-row"><span>Subtotal</span><span id="fs-subtotal">₹0.00</span></div>
+              <div class="total-row" id="fs-loading-row" style="display:none"><span>Loading Charge</span><span id="fs-loading-amt">₹0.00</span></div>
+              <div class="total-row discount-row" id="fs-disc-row" style="display:none"><span>Discount</span><span id="fs-disc-amt">— ₹0.00</span></div>
+              <div class="total-row" id="fs-gst-row" style="display:none"><span>GST (18%)</span><span id="fs-gst-amt">₹0.00</span></div>
+              <div class="total-row grand"><span>Grand Total</span><span id="fs-grand">₹0.00</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Customer Details -->
+      <div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">👤 Customer Details</div></div>
+          <div class="panel-body">
+            <div class="form-grid" style="grid-template-columns:1fr">
+              <div class="form-group">
+                <label class="form-label">Customer Name <span style="color:var(--danger)">*</span></label>
+                <input type="text" class="form-control" name="customer" placeholder="Full name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone Number <span style="color:var(--danger)">*</span></label>
+                <input type="text" class="form-control" name="phone" placeholder="+91 XXXXX XXXXX" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">GST Number (optional)</label>
+                <input type="text" class="form-control" name="gst" id="fs-gst-input" placeholder="e.g. 22AAAAA0000A1Z5" oninput="calcTotal('feet')">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Address</label>
+                <textarea class="form-control" name="address" placeholder="Street, City, Area..."
+                          rows="3" style="resize:vertical"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Amount Received Now (₹)</label>
+                <input type="number" class="form-control" name="amount_paid" placeholder="Leave blank for full payment" min="0" step="0.01">
+                <span style="font-size:11px;color:var(--muted)">Leave blank if paid in full. Enter a smaller amount to record the rest as customer udhaar (due).</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Note (optional)</label>
+                <input type="text" class="form-control" name="note" placeholder="Remarks">
+              </div>
+            </div>
+            <div style="margin-top:18px">
+              <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px">
+                ✅ Record Sale
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </form>
+</div>
+
+<!-- ═══ INTERLOCK SALE ═══ -->
+<div id="sale-interlock" style="display:none">
+  <form method="POST" id="form-il">
+    <input type="hidden" name="cat" value="interlock">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+      <!-- LEFT: Product + Pricing -->
+      <div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">🔩 Product</div></div>
+          <div class="panel-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Size</label>
+                <select class="form-control" name="size" id="is-size" onchange="fetchStockAndPrice('interlock')" required>
+                  {% for s in il_sizes %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Shape</label>
+                <select class="form-control" name="shape" id="is-shape" onchange="fetchStockAndPrice('interlock')" required>
+                  {% for s in il_shapes %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Color</label>
+                <select class="form-control" name="color" id="is-color" onchange="fetchStockAndPrice('interlock')" required>
+                  {% for c in il_colors %}<option value="{{ c.name }}">{{ c.name }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Available Stock</label>
+                <div class="form-control avail-display" id="is-avail">—</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Quantity (pcs)</label>
+                <input type="number" class="form-control" name="qty" id="is-qty" placeholder="Enter qty" min="1" oninput="calcTotal('interlock')" required>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">💰 Pricing</div></div>
+          <div class="panel-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Price per Tile (₹)</label>
+                <input type="number" class="form-control" name="price_per_unit" id="is-price"
+                       placeholder="0.00" min="0" step="0.01" oninput="calcTotal('interlock')">
+                <span style="font-size:11px;color:var(--muted)">Auto-filled from price list if set</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Loading Charge</label>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                    <input type="checkbox" name="use_loading" id="is-loading" onchange="calcTotal('interlock')"
+                           style="width:16px;height:16px;accent-color:var(--accent)">
+                    Apply loading charge
+                  </label>
+                  <span style="font-size:12px;color:var(--muted)" id="is-loading-rate">₹{{ loading_charge }}/tile</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Discount Type</label>
+                <select class="form-control" name="discount_type" id="is-disc-type" onchange="calcTotal('interlock')">
+                  <option value="">No Discount</option>
+                  <option value="percent">Percent (%)</option>
+                  <option value="amount">Fixed Amount (₹)</option>
+                </select>
+              </div>
+              <div class="form-group" id="is-disc-wrap" style="display:none">
+                <label class="form-label" id="is-disc-label">Discount Value</label>
+                <input type="number" class="form-control" name="discount_value" id="is-disc-val"
+                       placeholder="0" min="0" step="0.01" oninput="calcTotal('interlock')">
+              </div>
+            </div>
+
+            <div class="total-box" id="is-total-box">
+              <div class="total-row"><span>Subtotal</span><span id="is-subtotal">₹0.00</span></div>
+              <div class="total-row" id="is-loading-row" style="display:none"><span>Loading Charge</span><span id="is-loading-amt">₹0.00</span></div>
+              <div class="total-row discount-row" id="is-disc-row" style="display:none"><span>Discount</span><span id="is-disc-amt">— ₹0.00</span></div>
+              <div class="total-row" id="is-gst-row" style="display:none"><span>GST (18%)</span><span id="is-gst-amt">₹0.00</span></div>
+              <div class="total-row grand"><span>Grand Total</span><span id="is-grand">₹0.00</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Customer Details -->
+      <div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">👤 Customer Details</div></div>
+          <div class="panel-body">
+            <div class="form-grid" style="grid-template-columns:1fr">
+              <div class="form-group">
+                <label class="form-label">Customer Name <span style="color:var(--danger)">*</span></label>
+                <input type="text" class="form-control" name="customer" placeholder="Full name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone Number <span style="color:var(--danger)">*</span></label>
+                <input type="text" class="form-control" name="phone" placeholder="+91 XXXXX XXXXX" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">GST Number (optional)</label>
+                <input type="text" class="form-control" name="gst" id="is-gst-input" placeholder="e.g. 22AAAAA0000A1Z5" oninput="calcTotal('interlock')">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Address</label>
+                <textarea class="form-control" name="address" placeholder="Street, City, Area..."
+                          rows="3" style="resize:vertical"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Amount Received Now (₹)</label>
+                <input type="number" class="form-control" name="amount_paid" placeholder="Leave blank for full payment" min="0" step="0.01">
+                <span style="font-size:11px;color:var(--muted)">Leave blank if paid in full. Enter a smaller amount to record the rest as customer udhaar (due).</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Note (optional)</label>
+                <input type="text" class="form-control" name="note" placeholder="Remarks">
+              </div>
+            </div>
+            <div style="margin-top:18px">
+              <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px">
+                ✅ Record Sale
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function fmt(n) { return '₹' + parseFloat(n || 0).toFixed(2); }
+const p = (id) => document.getElementById(id);
+
+function fetchStockAndPrice(cat) {
+  const pfx = cat === 'feet' ? 'fs' : 'is';
+  const size  = p(pfx + '-size').value;
+  const color = p(pfx + '-color').value;
+  const shape = cat === 'interlock' ? p('is-shape').value : '';
+  const params = `cat=${cat}&size=${encodeURIComponent(size)}&shape=${encodeURIComponent(shape)}&color=${encodeURIComponent(color)}`;
+  fetch('/api/stock?' + params).then(r => r.json()).then(data => {
+    const avail = p(pfx + '-avail');
+    avail.textContent = data.stock + (cat === 'feet' ? ' sqft' : ' pcs');
+    avail.style.color = data.stock > 0 ? 'var(--success)' : 'var(--danger)';
+    // Auto-fill price if set
+    if (data.price > 0) p(pfx + '-price').value = data.price;
+    calcTotal(cat);
+  });
+}
+
+function calcTotal(cat) {
+  const pfx = cat === 'feet' ? 'fs' : 'is';
+  const qty   = parseFloat(p(pfx + '-qty').value) || 0;
+  const price = parseFloat(p(pfx + '-price').value) || 0;
+  const subtotal = qty * price;
+
+  const useLoading = p(pfx + '-loading').checked;
+  const loadingAmt = useLoading ? (LOADING_RATE * qty) : 0;
+  p(pfx + '-loading-row').style.display = useLoading ? '' : 'none';
+  p(pfx + '-loading-amt').textContent = fmt(loadingAmt);
+
+  const discType = p(pfx + '-disc-type').value;
+  const discWrap = p(pfx + '-disc-wrap');
+  const discLabel = p(pfx + '-disc-label');
+  discWrap.style.display = discType ? '' : 'none';
+  discLabel.textContent  = discType === 'percent' ? 'Discount (%)' : 'Discount Amount (₹)';
+
+  let discAmt = 0;
+  const discVal = parseFloat(p(pfx + '-disc-val') ? p(pfx + '-disc-val').value : 0) || 0;
+  if (discType === 'percent') discAmt = subtotal * discVal / 100;
+  else if (discType === 'amount') discAmt = Math.min(discVal, subtotal);
+
+  p(pfx + '-disc-row').style.display = (discType && discAmt > 0) ? '' : 'none';
+  p(pfx + '-disc-amt').textContent = '— ' + fmt(discAmt);
+
+  const gstInput = p(pfx === 'fs' ? 'fs-gst-input' : 'is-gst-input');
+  const hasGst   = gstInput && gstInput.value.trim().length > 0;
+  const baseAmt  = subtotal - discAmt + loadingAmt;
+  const gstAmt   = hasGst ? Math.round(baseAmt * 0.18 * 100) / 100 : 0;
+  p(pfx + '-gst-row').style.display = hasGst ? '' : 'none';
+  p(pfx + '-gst-amt').textContent = fmt(gstAmt);
+  const grand = baseAmt + gstAmt;
+  p(pfx + '-subtotal').textContent = fmt(subtotal);
+  p(pfx + '-grand').textContent    = fmt(grand);
+  p(pfx + '-total-box').style.display = qty > 0 ? '' : 'none';
+}
+
+window.addEventListener('load', () => {
+  fetchStockAndPrice('feet');
+  fetchStockAndPrice('interlock');
+  // Hide total boxes initially
+  p('fs-total-box').style.display = 'none';
+  p('is-total-box').style.display = 'none';
+});
+</script>
+{% endblock %}

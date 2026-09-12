@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+
+{% block content %}
+
+<!-- Stat cards — clicking takes you to the relevant detail page -->
+<div class="stat-grid" style="margin-bottom:24px">
+
+  <a href="/sales-history?cat=feet" class="stat-card stat-link" style="--accent-color:var(--teal)">
+    <div class="stat-label">Feet×Feet Sold</div>
+    <div class="stat-value">{{ "{:,}".format(feet_sold) }}</div>
+    <div class="stat-sub">sqft total &nbsp;→ view sales</div>
+  </a>
+
+  <a href="/sales-history?cat=interlock" class="stat-card stat-link" style="--accent-color:var(--blue)">
+    <div class="stat-label">Interlock Sold</div>
+    <div class="stat-value">{{ "{:,}".format(il_sold) }}</div>
+    <div class="stat-sub">pcs total &nbsp;→ view sales</div>
+  </a>
+
+  <a href="/inventory" class="stat-card stat-link" style="--accent-color:var(--accent)">
+    <div class="stat-label">Feet×Feet Stock</div>
+    <div class="stat-value">{{ "{:,}".format(feet_stock) }}</div>
+    <div class="stat-sub">sqft remaining &nbsp;→ view stock</div>
+  </a>
+
+  <a href="/inventory" class="stat-card stat-link" style="--accent-color:var(--accent2)">
+    <div class="stat-label">Interlock Stock</div>
+    <div class="stat-value">{{ "{:,}".format(il_stock) }}</div>
+    <div class="stat-sub">pcs remaining &nbsp;→ view stock</div>
+  </a>
+
+  <a href="/sales-history" class="stat-card stat-link" style="--accent-color:var(--success)">
+    <div class="stat-label">Total Revenue</div>
+    <div class="stat-value" style="font-size:20px">₹{{ "{:,.2f}".format(total_revenue) }}</div>
+    <div class="stat-sub">all-time grand total &nbsp;→ view all sales</div>
+  </a>
+
+</div>
+
+<!-- Top Selling tables — each row links to filtered sales history -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">🏆 Top Selling — Feet×Feet</div>
+      <a href="/sales-history?cat=feet" style="font-size:12px;color:var(--accent)">View all →</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Size</th><th>Color</th><th>Units Sold</th><th>Revenue</th><th></th></tr></thead>
+        <tbody>
+          {% if top_feet %}
+            {% for r in top_feet %}
+            <tr class="clickable-row" onclick="window.location='/sales-history?cat=feet'" style="cursor:pointer">
+              <td>{{ r.size }}</td>
+              <td>
+                <span class="color-dot" style="background:{{ colors_feet.get(r.color, '#888') }}"></span>
+                {{ r.color }}
+              </td>
+              <td><strong>{{ r.total }}</strong></td>
+              <td style="color:var(--accent)">₹{{ "{:,.2f}".format(r.revenue or 0) }}</td>
+              <td style="color:var(--muted);font-size:11px">→</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="5" style="color:var(--muted);text-align:center;padding:20px">No data yet</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">🏆 Top Selling — Interlock</div>
+      <a href="/sales-history?cat=interlock" style="font-size:12px;color:var(--accent)">View all →</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Size</th><th>Shape</th><th>Color</th><th>Units Sold</th><th>Revenue</th><th></th></tr></thead>
+        <tbody>
+          {% if top_interlock %}
+            {% for r in top_interlock %}
+            <tr class="clickable-row" onclick="window.location='/sales-history?cat=interlock'" style="cursor:pointer">
+              <td>{{ r.size }}</td>
+              <td>{{ r.shape }}</td>
+              <td>
+                <span class="color-dot" style="background:{{ colors_il.get(r.color, '#888') }}"></span>
+                {{ r.color }}
+              </td>
+              <td><strong>{{ r.total }}</strong></td>
+              <td style="color:var(--accent)">₹{{ "{:,.2f}".format(r.revenue or 0) }}</td>
+              <td style="color:var(--muted);font-size:11px">→</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">No data yet</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Monthly Breakdown — clicking month filters sales history by that month -->
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">📅 Monthly Breakdown</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Month</th><th>Category</th><th>Units Sold</th><th>Revenue</th><th></th></tr></thead>
+      <tbody>
+        {% if monthly %}
+          {% for r in monthly %}
+          <tr class="clickable-row"
+              onclick="window.location='/sales-history?cat={{ r.cat }}&date={{ r.month }}-01'"
+              style="cursor:pointer"
+              title="View {{ r.month }} {{ 'Feet×Feet' if r.cat == 'feet' else 'Interlock' }} sales">
+            <td>{{ r.month }}</td>
+            <td><span class="badge {{ 'badge-teal' if r.cat == 'feet' else 'badge-blue' }}">
+              {{ 'Feet×Feet' if r.cat == 'feet' else 'Interlock' }}
+            </span></td>
+            <td><strong>{{ r.total }}</strong></td>
+            <td style="color:var(--accent)">₹{{ "{:,.2f}".format(r.revenue or 0) }}</td>
+            <td style="color:var(--muted);font-size:11px">→</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="5" style="color:var(--muted);text-align:center;padding:20px">No data yet</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

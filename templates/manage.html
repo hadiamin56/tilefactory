@@ -1,0 +1,357 @@
+{% extends 'base.html' %}
+{% block title %}Manage Options{% endblock %}
+{% block page_title %}Manage Options{% endblock %}
+
+{% block content %}
+
+<!-- ═══ OPTIONS PANELS ═══ -->
+<div class="manage-grid">
+
+  <!-- Feet Sizes -->
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">📐 Feet×Feet — Sizes</div></div>
+    <div class="panel-body">
+      <div style="margin-bottom:12px;min-height:32px">
+        {% if feet_sizes %}
+          {% for item in feet_sizes %}
+          <span class="tag">{{ item.name }}
+            <form method="POST" style="display:inline">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="table"  value="feet_sizes">
+              <input type="hidden" name="id"     value="{{ item.id }}">
+              <button type="submit" class="tag-del" onclick="return confirm('Remove?')">×</button>
+            </form>
+          </span>
+          {% endfor %}
+        {% else %}<span style="color:var(--muted);font-size:12px">No items yet</span>{% endif %}
+      </div>
+      <form method="POST" style="display:flex;gap:8px">
+        <input type="hidden" name="action" value="add">
+        <input type="hidden" name="table"  value="feet_sizes">
+        <input type="text" class="form-control" name="name" placeholder="e.g. 1x1, 2x2" style="flex:1" required>
+        <button type="submit" class="btn btn-primary btn-sm">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Feet Colors -->
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">🎨 Feet×Feet — Colors</div></div>
+    <div class="panel-body">
+      <div style="margin-bottom:12px;min-height:32px">
+        {% if feet_colors %}
+          {% for item in feet_colors %}
+          <span class="tag">
+            <span class="color-dot" style="background:{{ item.hex }}"></span>{{ item.name }}
+            <form method="POST" style="display:inline">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="table"  value="feet_colors">
+              <input type="hidden" name="id"     value="{{ item.id }}">
+              <button type="submit" class="tag-del" onclick="return confirm('Remove?')">×</button>
+            </form>
+          </span>
+          {% endfor %}
+        {% else %}<span style="color:var(--muted);font-size:12px">No items yet</span>{% endif %}
+      </div>
+      <form method="POST" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="hidden" name="action" value="add">
+        <input type="hidden" name="table"  value="feet_colors">
+        <input type="text" class="form-control" name="name" placeholder="Color name" style="flex:1;min-width:120px" required>
+        <input type="color" name="hex" value="#888888" style="width:38px;height:38px;padding:2px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);cursor:pointer">
+        <button type="submit" class="btn btn-primary btn-sm">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Interlock Sizes -->
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">📦 Interlock — Sizes</div></div>
+    <div class="panel-body">
+      <div style="margin-bottom:12px;min-height:32px">
+        {% if interlock_sizes %}
+          {% for item in interlock_sizes %}
+          <span class="tag">{{ item.name }}
+            <form method="POST" style="display:inline">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="table"  value="interlock_sizes">
+              <input type="hidden" name="id"     value="{{ item.id }}">
+              <button type="submit" class="tag-del" onclick="return confirm('Remove?')">×</button>
+            </form>
+          </span>
+          {% endfor %}
+        {% else %}<span style="color:var(--muted);font-size:12px">No items yet</span>{% endif %}
+      </div>
+      <form method="POST" style="display:flex;gap:8px">
+        <input type="hidden" name="action" value="add">
+        <input type="hidden" name="table"  value="interlock_sizes">
+        <input type="text" class="form-control" name="name" placeholder="e.g. 200x100" style="flex:1" required>
+        <button type="submit" class="btn btn-primary btn-sm">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Interlock Shapes -->
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">🔷 Interlock — Shapes</div></div>
+    <div class="panel-body">
+      <div style="margin-bottom:12px;min-height:32px">
+        {% if interlock_shapes %}
+          {% for item in interlock_shapes %}
+          <span class="tag">{{ item.name }}
+            <form method="POST" style="display:inline">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="table"  value="interlock_shapes">
+              <input type="hidden" name="id"     value="{{ item.id }}">
+              <button type="submit" class="tag-del" onclick="return confirm('Remove?')">×</button>
+            </form>
+          </span>
+          {% endfor %}
+        {% else %}<span style="color:var(--muted);font-size:12px">No items yet</span>{% endif %}
+      </div>
+      <form method="POST" style="display:flex;gap:8px">
+        <input type="hidden" name="action" value="add">
+        <input type="hidden" name="table"  value="interlock_shapes">
+        <input type="text" class="form-control" name="name" placeholder="e.g. Brick, Herringbone" style="flex:1" required>
+        <button type="submit" class="btn btn-primary btn-sm">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Interlock Colors -->
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">🎨 Interlock — Colors</div></div>
+    <div class="panel-body">
+      <div style="margin-bottom:12px;min-height:32px">
+        {% if interlock_colors %}
+          {% for item in interlock_colors %}
+          <span class="tag">
+            <span class="color-dot" style="background:{{ item.hex }}"></span>{{ item.name }}
+            <form method="POST" style="display:inline">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="table"  value="interlock_colors">
+              <input type="hidden" name="id"     value="{{ item.id }}">
+              <button type="submit" class="tag-del" onclick="return confirm('Remove?')">×</button>
+            </form>
+          </span>
+          {% endfor %}
+        {% else %}<span style="color:var(--muted);font-size:12px">No items yet</span>{% endif %}
+      </div>
+      <form method="POST" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="hidden" name="action" value="add">
+        <input type="hidden" name="table"  value="interlock_colors">
+        <input type="text" class="form-control" name="name" placeholder="Color name" style="flex:1;min-width:120px" required>
+        <input type="color" name="hex" value="#888888" style="width:38px;height:38px;padding:2px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);cursor:pointer">
+        <button type="submit" class="btn btn-primary btn-sm">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Low Stock Threshold -->
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">⚠️ Low Stock Threshold</div></div>
+    <div class="panel-body">
+      <form method="POST">
+        <input type="hidden" name="action" value="threshold">
+        <div class="form-group">
+          <label class="form-label">Alert when stock is below</label>
+          <input type="number" class="form-control" name="name" value="{{ threshold }}" min="1" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm" style="margin-top:12px">Save</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Loading Charge -->
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">🚚 Loading Charge (per tile)</div></div>
+    <div class="panel-body">
+      <form method="POST">
+        <input type="hidden" name="action" value="loading_charge">
+        <div class="form-group">
+          <label class="form-label">Rate (₹ per tile)</label>
+          <input type="number" class="form-control" name="loading_charge"
+                 value="{{ loading_charge }}" min="0" step="0.01" required>
+          <span style="font-size:11px;color:var(--muted)">Shown as a checkbox when recording a sale</span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm" style="margin-top:12px">Save Loading Charge</button>
+      </form>
+    </div>
+  </div>
+
+</div><!-- /manage-grid -->
+
+<!-- Business Details -->
+<div class="panel" style="margin-top:8px">
+  <div class="panel-header"><div class="panel-title">🏢 Business Details (for Invoice)</div></div>
+  <div class="panel-body">
+    <form method="POST">
+      <input type="hidden" name="action" value="business">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Business Name</label>
+          <input type="text" class="form-control" name="biz_name" value="{{ biz.biz_name }}" placeholder="e.g. Tile Factory">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <input type="text" class="form-control" name="biz_address" value="{{ biz.biz_address }}" placeholder="Full address">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input type="text" class="form-control" name="biz_phone" value="{{ biz.biz_phone }}" placeholder="Phone number">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="text" class="form-control" name="biz_email" value="{{ biz.biz_email }}" placeholder="Email address">
+        </div>
+        <div class="form-group">
+          <label class="form-label">GSTIN</label>
+          <input type="text" class="form-control" name="biz_gstin" value="{{ biz.biz_gstin }}" placeholder="Your GST number">
+        </div>
+        <div class="form-group">
+          <label class="form-label">State</label>
+          <input type="text" class="form-control" name="biz_state" value="{{ biz.biz_state }}" placeholder="e.g. 01-Jammu & Kashmir">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Invoice Prefix</label>
+          <input type="text" class="form-control" name="invoice_prefix" value="{{ biz.invoice_prefix or 'TFS' }}" placeholder="e.g. TFS">
+          <span style="font-size:11px;color:var(--muted)">Invoice numbers will be TFS1, TFS2...</span>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm" style="margin-top:16px">💾 Save Business Details</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ═══ PRICE LIST ═══ -->
+<div class="panel" style="margin-top:8px">
+  <div class="panel-header">
+    <div class="panel-title">💰 Price List (per tile)</div>
+    <span style="font-size:12px;color:var(--muted)">
+      Feet×Feet: price per size &nbsp;|&nbsp; Interlock: price per size + shape
+    </span>
+  </div>
+  <div class="panel-body">
+
+    <!-- TWO SEPARATE ADD FORMS side by side -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+
+      <!-- FEET PRICE FORM -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:14px;color:var(--teal)">📐 Add Feet×Feet Price</div>
+        <form method="POST">
+          <input type="hidden" name="action"    value="set_price">
+          <input type="hidden" name="price_cat" value="feet">
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">Size</label>
+            <select class="form-control" name="price_size" id="feet-price-size">
+              {% if all_feet_sizes %}
+                {% for s in all_feet_sizes %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+              {% else %}
+                <option value="" disabled>No sizes added yet</option>
+              {% endif %}
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Price per Tile (₹)</label>
+            <input type="number" class="form-control" name="price_value"
+                   placeholder="0.00" min="0" step="0.01" required>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+            💡 One price applies to all colors of this size
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm" {% if not all_feet_sizes %}disabled{% endif %}>
+            💾 Save Feet Price
+          </button>
+        </form>
+      </div>
+
+      <!-- INTERLOCK PRICE FORM -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:14px;color:var(--blue)">🔩 Add Interlock Price</div>
+        <form method="POST">
+          <input type="hidden" name="action"    value="set_price">
+          <input type="hidden" name="price_cat" value="interlock">
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">Size</label>
+            <select class="form-control" name="price_size" id="il-price-size">
+              {% if all_il_sizes %}
+                {% for s in all_il_sizes %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+              {% else %}
+                <option value="" disabled>No sizes added yet</option>
+              {% endif %}
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">Shape</label>
+            <select class="form-control" name="price_shape" id="il-price-shape">
+              {% if all_il_shapes %}
+                {% for s in all_il_shapes %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+              {% else %}
+                <option value="" disabled>No shapes added yet</option>
+              {% endif %}
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Price per Tile (₹)</label>
+            <input type="number" class="form-control" name="price_value"
+                   placeholder="0.00" min="0" step="0.01" required>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+            💡 One price applies to all colors of this size + shape
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm"
+                  {% if not all_il_sizes or not all_il_shapes %}disabled{% endif %}>
+            💾 Save Interlock Price
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- Saved prices table -->
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Category</th><th>Size</th><th>Shape</th><th>Price / Tile</th><th></th>
+        </tr></thead>
+        <tbody>
+          {% if price_list %}
+            {% for p in price_list %}
+            <tr>
+              <td>
+                <span class="badge {{ 'badge-teal' if p.cat == 'feet' else 'badge-blue' }}">
+                  {{ 'Feet×Feet' if p.cat == 'feet' else 'Interlock' }}
+                </span>
+              </td>
+              <td>{{ p.size }}</td>
+              <td>{{ p.shape if p.shape else '— (all colors)' }}</td>
+              <td><strong style="color:var(--accent)">₹{{ "%.2f"|format(p.price) }}</strong></td>
+              <td>
+                <form method="POST" style="display:inline">
+                  <input type="hidden" name="action" value="delete_price">
+                  <input type="hidden" name="id"     value="{{ p.id }}">
+                  <button type="submit" class="btn btn-danger btn-sm"
+                          onclick="return confirm('Remove this price?')">Del</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="5">
+              <div class="empty"><div class="empty-icon">💰</div><p>No prices set yet</p></div>
+            </td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

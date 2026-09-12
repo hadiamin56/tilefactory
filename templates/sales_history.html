@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Sales History{% endblock %}
+{% block page_title %}Sales History{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
+  <form method="GET" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <select class="form-control" name="cat" style="width:160px" onchange="this.form.submit()">
+      <option value="" {{ 'selected' if not cat }}>All Categories</option>
+      <option value="feet" {{ 'selected' if cat == 'feet' }}>Feet × Feet</option>
+      <option value="interlock" {{ 'selected' if cat == 'interlock' }}>Interlock</option>
+    </select>
+    <select class="form-control" name="gst_filter" style="width:140px" onchange="this.form.submit()">
+      <option value="" {{ 'selected' if not gst_filter }}>All Sales</option>
+      <option value="yes" {{ 'selected' if gst_filter == 'yes' }}>GST Sales Only</option>
+      <option value="no"  {{ 'selected' if gst_filter == 'no' }}>Non-GST Only</option>
+    </select>
+    <input type="date" class="form-control" name="date" style="width:160px" value="{{ date }}" onchange="this.form.submit()">
+    <a href="/sales-history" class="btn btn-secondary btn-sm">Clear</a>
+  </form>
+  <div style="margin-left:auto;display:flex;gap:16px;align-items:center">
+    <span style="font-size:12px;color:var(--muted)">{{ records|length }} records</span>
+    <span style="font-size:14px;font-weight:700;color:var(--accent)">Total: ₹{{ "%.2f"|format(total_revenue) }}</span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">All Sales</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Date</th><th>Cat</th><th>Product</th><th>Qty</th>
+        <th>Price/Tile</th><th>Subtotal</th><th>Loading</th><th>Discount</th>
+        <th>GST(18%)</th>
+        <th style="color:var(--accent)">Grand Total</th>
+        <th>Paid</th><th>Due</th>
+        <th>Customer</th><th>Phone</th><th>GST No.</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% if records %}
+          {% for s in records %}
+          <tr id="row-{{ s.id }}">
+            <td style="color:var(--muted)">{{ loop.index }}</td>
+            <td>{{ s.sale_date }}</td>
+            <td><span class="badge {{ 'badge-teal' if s.cat == 'feet' else 'badge-blue' }}">
+              {{ 'F×F' if s.cat == 'feet' else 'IL' }}
+            </span></td>
+            <td>{{ s.description }}</td>
+            <td><strong>{{ s.quantity }}</strong></td>
+            <td>₹{{ "%.2f"|format(s.price_per_unit or 0) }}</td>
+            <td>₹{{ "%.2f"|format(s.subtotal or 0) }}</td>
+            <td>{% if s.loading_charge %}₹{{ "%.2f"|format(s.loading_charge) }}{% else %}—{% endif %}</td>
+            <td>
+              {% if s.discount_amount %}
+                <span style="color:var(--success)">
+                  — ₹{{ "%.2f"|format(s.discount_amount) }}
+                  {% if s.discount_type == 'percent' %}({{ s.discount_value }}%){% endif %}
+                </span>
+              {% else %}—{% endif %}
+            </td>
+            <td>{% if s.gst_amount %}<span style="color:var(--teal)">₹{{ "%.2f"|format(s.gst_amount) }}</span>{% else %}—{% endif %}</td>
+            <td><strong style="color:var(--accent)">₹{{ "%.2f"|format(s.grand_total or 0) }}</strong></td>
+            <td style="color:var(--success)">₹{{ "%.2f"|format(s.amount_paid if s.amount_paid is not none else s.grand_total or 0) }}</td>
+            <td>{% if s.amount_due %}<span style="color:var(--danger);font-weight:600">₹{{ "%.2f"|format(s.amount_due) }}</span>{% else %}—{% endif %}</td>
+            <td style="font-size:12px">
+              {% if s.customer_id %}<a href="/customers/{{ s.customer_id }}" style="color:inherit;text-decoration:underline">{{ s.customer or '—' }}</a>{% else %}{{ s.customer or '—' }}{% endif %}
+              {% if s.phone %}<br><span style="color:var(--muted)">{{ s.phone }}</span>{% endif %}
+              {% if s.address %}<br><span style="color:var(--muted);font-size:11px">{{ s.address[:30] }}{% if s.address|length > 30 %}...{% endif %}</span>{% endif %}
+            </td>
+            <td style="font-size:12px;color:var(--muted)">{{ s.gst or '—' }}</td>
+            <td style="font-size:12px;color:var(--muted)">{{ s.note or '' }}</td>
+            <td style="display:flex;gap:4px">
+              <a href="/invoice/{{ s.id }}" class="btn btn-teal btn-sm" target="_blank">🧾</a>
+              <button class="btn btn-danger btn-sm" onclick="deleteSale({{ s.id }})">Del</button>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="18"><div class="empty"><div class="empty-icon">📋</div><p>No sales found</p></div></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteSale(id) {
+  if (!confirm('Delete this sale record?')) return;
+  fetch('/api/sales/delete', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({id})
+  }).then(() => { document.getElementById('row-' + id).remove(); toast('Deleted', 'err'); });
+}
+</script>
+{% endblock %}

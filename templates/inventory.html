@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Available Stock{% endblock %}
+{% block page_title %}Available Stock — Live Balances{% endblock %}
+
+{% block content %}
+
+<div style="background:rgba(74,140,255,.08);border:1px solid rgba(74,140,255,.25);border-radius:var(--radius);padding:12px 18px;margin-bottom:20px;font-size:13px;color:var(--blue)">
+  📦 This shows <strong>currently available stock</strong> — updated in real-time as sales are recorded.
+  To see all original stock additions, visit the <a href="/inventory-log" style="color:var(--accent);text-decoration:underline">Inventory Log</a>.
+</div>
+
+<div class="tabs" id="inv-tabs">
+  <div class="tab active" onclick="switchTab('feet',this,'inv-feet','inv-interlock')">📐 Feet × Feet</div>
+  <div class="tab" onclick="switchTab('interlock',this,'inv-feet','inv-interlock')">🔩 Interlock</div>
+</div>
+
+<!-- FEET INVENTORY -->
+<div id="inv-feet">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Feet × Feet — Stock</div>
+      <a href="/add-inventory" class="btn btn-primary btn-sm">➕ Add Stock</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Size</th><th>Color</th><th>Stock (sqft)</th><th>Last Updated</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% if feet %}
+            {% for row in feet %}
+            <tr>
+              <td><strong>{{ row.size }}</strong></td>
+              <td>
+                <span class="color-dot" style="background:{{ colors_feet.get(row.color, '#888') }}"></span>
+                {{ row.color }}
+              </td>
+              <td class="{{ 'stock-low' if row.stock < threshold else 'stock-ok' }}">
+                {{ row.stock }} sqft {{ '⚠️' if row.stock < threshold else '' }}
+              </td>
+              <td style="font-size:12px;color:var(--muted)">{{ row.updated or '—' }}</td>
+              <td>
+                <button class="btn btn-secondary btn-sm"
+                  onclick="openEditInv('feet','{{ row.size }}','','{{ row.color }}',{{ row.stock }})">Edit</button>
+                <button class="btn btn-danger btn-sm" style="margin-left:6px"
+                  onclick="deleteInv('feet','{{ row.size }}','','{{ row.color }}')">Del</button>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="5"><div class="empty"><div class="empty-icon">📦</div><p>No inventory yet. <a href="/add-inventory" style="color:var(--accent)">Add stock →</a></p></div></td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- INTERLOCK INVENTORY -->
+<div id="inv-interlock" style="display:none">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Interlock — Stock</div>
+      <a href="/add-inventory" class="btn btn-primary btn-sm">➕ Add Stock</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Size</th><th>Shape</th><th>Color</th><th>Stock (pcs)</th><th>Last Updated</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% if interlock %}
+            {% for row in interlock %}
+            <tr>
+              <td><strong>{{ row.size }}</strong></td>
+              <td>{{ row.shape }}</td>
+              <td>
+                <span class="color-dot" style="background:{{ colors_il.get(row.color, '#888') }}"></span>
+                {{ row.color }}
+              </td>
+              <td class="{{ 'stock-low' if row.stock < threshold else 'stock-ok' }}">
+                {{ row.stock }} pcs {{ '⚠️' if row.stock < threshold else '' }}
+              </td>
+              <td style="font-size:12px;color:var(--muted)">{{ row.updated or '—' }}</td>
+              <td>
+                <button class="btn btn-secondary btn-sm"
+                  onclick="openEditInv('interlock','{{ row.size }}','{{ row.shape }}','{{ row.color }}',{{ row.stock }})">Edit</button>
+                <button class="btn btn-danger btn-sm" style="margin-left:6px"
+                  onclick="deleteInv('interlock','{{ row.size }}','{{ row.shape }}','{{ row.color }}')">Del</button>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="6"><div class="empty"><div class="empty-icon">📦</div><p>No inventory yet. <a href="/add-inventory" style="color:var(--accent)">Add stock →</a></p></div></td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let _editMeta = {};
+function openEditInv(cat, size, shape, color, stock) {
+  _editMeta = {cat, size, shape, color};
+  document.getElementById('modal-edit-title').textContent = `Edit Stock — ${size} ${shape} / ${color}`.replace('  ',' ');
+  document.getElementById('modal-edit-qty').value = stock;
+  document.getElementById('modal-edit-inv').classList.add('open');
+}
+function saveEditInv() {
+  const qty = parseInt(document.getElementById('modal-edit-qty').value) || 0;
+  fetch('/api/inventory/update', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({..._editMeta, stock: qty})
+  }).then(() => { closeModal('modal-edit-inv'); toast('Stock updated ✅'); setTimeout(()=>location.reload(),800); });
+}
+function deleteInv(cat, size, shape, color) {
+  if (!confirm('Delete this entry?')) return;
+  fetch('/api/inventory/delete', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({cat, size, shape, color})
+  }).then(() => { toast('Deleted','err'); setTimeout(()=>location.reload(),800); });
+}
+</script>
+{% endblock %}

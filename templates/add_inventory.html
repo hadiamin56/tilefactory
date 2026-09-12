@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% block title %}Add Stock{% endblock %}
+{% block page_title %}Add / Restock Inventory{% endblock %}
+
+{% block content %}
+{% if success %}
+<div class="alert-success">✅ Stock added — inventory log updated and available stock increased.</div>
+{% endif %}
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('feet',this,'add-feet','add-interlock')">📐 Feet × Feet</div>
+  <div class="tab" onclick="switchTab('interlock',this,'add-feet','add-interlock')">🔩 Interlock</div>
+</div>
+
+<!-- FEET ADD -->
+<div id="add-feet">
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">Add / Restock — Feet × Feet</div></div>
+    <div class="panel-body">
+      <form method="POST">
+        <input type="hidden" name="cat" value="feet">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Size</label>
+            <select class="form-control" name="size" required>
+              {% for s in feet_sizes %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Color</label>
+            <select class="form-control" name="color" required>
+              {% for c in feet_colors %}<option value="{{ c.name }}">{{ c.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quantity (sqft)</label>
+            <input type="number" class="form-control" name="qty" placeholder="Enter quantity" min="1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Added By (optional)</label>
+            <input type="text" class="form-control" name="added_by" placeholder="Person's name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Note (optional)</label>
+            <input type="text" class="form-control" name="note" placeholder="Supplier, batch, remarks...">
+          </div>
+          <!-- Backdate -->
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;font-size:13px;color:var(--muted)">
+              <input type="checkbox" id="f-backdate-chk" onchange="toggleDate('f-backdate-chk','f-backdate')"
+                     style="width:15px;height:15px;accent-color:var(--accent)">
+              Enter a backdate
+            </label>
+            <input type="date" class="form-control" name="log_date" id="f-backdate"
+                   style="display:none" max="{{ today }}">
+          </div>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+          <button type="submit" class="btn btn-primary">➕ Add to Inventory</button>
+          <a href="/inventory-log" class="btn btn-secondary">📒 View Log</a>
+          <a href="/inventory" class="btn btn-secondary">📦 Available Stock</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Available Stock — Feet × Feet</div>
+      <span style="font-size:12px;color:var(--muted)">Deducted by sales</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Size</th><th>Color</th><th>Available (sqft)</th></tr></thead>
+        <tbody>
+          {% if feet_inv %}
+            {% for r in feet_inv %}
+            <tr><td>{{ r.size }}</td><td>{{ r.color }}</td><td>{{ r.stock }}</td></tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="3" style="color:var(--muted);text-align:center;padding:20px">No stock yet</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- INTERLOCK ADD -->
+<div id="add-interlock" style="display:none">
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">Add / Restock — Interlock</div></div>
+    <div class="panel-body">
+      <form method="POST">
+        <input type="hidden" name="cat" value="interlock">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Size</label>
+            <select class="form-control" name="size" required>
+              {% for s in il_sizes %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shape</label>
+            <select class="form-control" name="shape" required>
+              {% for s in il_shapes %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Color</label>
+            <select class="form-control" name="color" required>
+              {% for c in il_colors %}<option value="{{ c.name }}">{{ c.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quantity (pcs)</label>
+            <input type="number" class="form-control" name="qty" placeholder="Enter quantity" min="1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Added By (optional)</label>
+            <input type="text" class="form-control" name="added_by" placeholder="Person's name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Note (optional)</label>
+            <input type="text" class="form-control" name="note" placeholder="Supplier, batch, remarks...">
+          </div>
+          <!-- Backdate -->
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;font-size:13px;color:var(--muted)">
+              <input type="checkbox" id="i-backdate-chk" onchange="toggleDate('i-backdate-chk','i-backdate')"
+                     style="width:15px;height:15px;accent-color:var(--accent)">
+              Enter a backdate
+            </label>
+            <input type="date" class="form-control" name="log_date" id="i-backdate"
+                   style="display:none" max="{{ today }}">
+          </div>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+          <button type="submit" class="btn btn-primary">➕ Add to Inventory</button>
+          <a href="/inventory-log" class="btn btn-secondary">📒 View Log</a>
+          <a href="/inventory" class="btn btn-secondary">📦 Available Stock</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Available Stock — Interlock</div>
+      <span style="font-size:12px;color:var(--muted)">Deducted by sales</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Size</th><th>Shape</th><th>Color</th><th>Available (pcs)</th></tr></thead>
+        <tbody>
+          {% if il_inv %}
+            {% for r in il_inv %}
+            <tr><td>{{ r.size }}</td><td>{{ r.shape }}</td><td>{{ r.color }}</td><td>{{ r.stock }}</td></tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="4" style="color:var(--muted);text-align:center;padding:20px">No stock yet</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleDate(chkId, inputId) {
+  const chk   = document.getElementById(chkId);
+  const input = document.getElementById(inputId);
+  input.style.display = chk.checked ? '' : 'none';
+  if (chk.checked) input.focus();
+  else input.value = '';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Supplier Ledger{% endblock %}
+{% block page_title %}Supplier Ledger{% endblock %}
+
+{% block content %}
+<div class="stat-grid" style="margin-bottom:18px">
+  <div class="stat-card" style="--accent-color:var(--accent)">
+    <div class="stat-label">Total Payable</div>
+    <div class="stat-value">₹{{ "{:,.0f}".format(total_payable) }}</div>
+    <div class="stat-sub">Owed to all suppliers</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">➕ Add Supplier</div></div>
+  <div class="panel-body">
+    <form method="POST" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end">
+      <div class="form-group">
+        <label class="form-label">Supplier Name</label>
+        <input type="text" class="form-control" name="name" placeholder="e.g. Ali Cement Store" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone (optional)</label>
+        <input type="text" class="form-control" name="phone" placeholder="Phone number">
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Add Supplier</button>
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">🏭 Suppliers</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Phone</th><th>Purchased</th><th>Paid</th><th>Bakaya (Due)</th><th></th></tr></thead>
+      <tbody>
+        {% if suppliers %}
+          {% for s in suppliers %}
+          <tr>
+            <td><strong>{{ s.name }}</strong></td>
+            <td>{{ s.phone or '—' }}</td>
+            <td>₹{{ "%.2f"|format(s.purchased) }}</td>
+            <td style="color:var(--success)">₹{{ "%.2f"|format(s.paid) }}</td>
+            <td>{% if s.bakaya %}<span class="stock-low">₹{{ "%.2f"|format(s.bakaya) }}</span>{% else %}—{% endif %}</td>
+            <td><a href="/suppliers/{{ s.id }}" class="btn btn-teal btn-sm">View Ledger</a></td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="6"><div class="empty"><div class="empty-icon">🏭</div><p>No suppliers yet</p></div></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

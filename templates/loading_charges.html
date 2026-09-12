@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Loading / Transport Charges{% endblock %}
+{% block page_title %}Loading / Transport Charges{% endblock %}
+
+{% block content %}
+<div class="stat-grid" style="margin-bottom:18px">
+  <div class="stat-card" style="--accent-color:var(--blue)">
+    <div class="stat-label">This Month's Loading Cost</div>
+    <div class="stat-value">₹{{ "{:,.0f}".format(month_total) }}</div>
+    <div class="stat-sub">Transport cost added to order cost</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">➕ Add Loading / Transport Charge</div></div>
+  <div class="panel-body">
+    <form method="POST">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Link to Order (optional)</label>
+          <select class="form-control" name="order_id">
+            <option value="">— Not linked to a specific order —</option>
+            {% for s in recent_sales %}
+            <option value="{{ s.id }}">#{{ s.id }} — {{ s.description }} ({{ s.customer or 'no customer' }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vehicle / Transport Details (optional)</label>
+          <input type="text" class="form-control" name="transport_details" placeholder="e.g. Truck #JK01-1234">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Charge Amount (₹)</label>
+          <input type="number" class="form-control" name="charge_amount" min="0.01" step="0.01" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm" style="margin-top:14px">Add Charge</button>
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title">🚚 All Loading Charges</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Order</th><th>Transport Details</th><th>Amount</th><th></th></tr></thead>
+      <tbody>
+        {% if charges %}
+          {% for c in charges %}
+          <tr>
+            <td>{{ c.charge_date }}</td>
+            <td>
+              {% if c.order_id %}
+                <a href="/invoice/{{ c.order_id }}" target="_blank">#{{ c.order_id }} — {{ c.order_desc }} ({{ c.order_customer or 'no customer' }})</a>
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ c.transport_details or '—' }}</td>
+            <td><strong>₹{{ "%.2f"|format(c.charge_amount) }}</strong></td>
+            <td>
+              <form method="POST" action="/loading-charges/{{ c.id }}/delete" style="display:inline">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this charge?')">Del</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="5"><div class="empty"><div class="empty-icon">🚚</div><p>No loading charges yet</p></div></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
